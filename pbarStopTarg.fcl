@@ -1,0 +1,40 @@
+#
+# make antiprotons at stopping target
+#
+#
+#
+#include "JobConfig/primary/prolog.fcl"
+process_name: pbarStopTarg
+
+source: { module_type : EmptyEvent }
+services: @local::Services.Sim
+physics : {
+  producers : {
+    generate : {
+      module_type : pbarStopTarg
+      physics : {
+        genId : pbarStopTarg
+	pdgId : -2212
+	elow : 49.9 // MeV
+	ehi : 50.0  // MeV
+	}
+      }
+    @table::Primary.producers
+  }
+  filters: { @table::Primary.filters }
+  analyzers: { @table::Primary.analyzers }
+  TriggerPath : @local::Primary.TriggerPath
+  EndPath : @local::Primary.EndPath
+}
+outputs : {
+  Output : @local::Primary.Output
+}
+#
+# final configuration
+#
+#include "JobConfig/primary/epilog.fcl"
+physics.filters.DigiFilter.particleTypes : [ -2212 ] # select antiprotons
+# customize the output
+services.TFileService.fileName: "nts.owner.pbarStopTarg.version.sequencer.root"
+outputs.Output.fileName: "dig.owner.pbarStopTarg.version.sequencer.art"
+physics.end_paths : [ EndPath ] # needed for generate_fcl
