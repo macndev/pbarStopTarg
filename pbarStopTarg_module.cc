@@ -169,8 +169,9 @@ namespace mu2e{
 	double cx = foil.centerInDetectorSystem().x();
 	double cy = foil.centerInDetectorSystem().y();
 	double cz = foil.centerInDetectorSystem().z();
-	double radius = foil.rOut();
+	double oradius = foil.rOut();
 	double halfThickness = foil.halfThickness();
+	double iradius = foil.rIn();
 
 	std::cout<<"The coordinates for foil "<<i<<" are: x center - "<<cx<<" y center - "<<cy<<" z center - "<<cz<<" radius - "<<radius<<" and half thickness - "<<halfThickness<<". Onto the next foil... "<<std::endl;
 	  
@@ -179,8 +180,11 @@ namespace mu2e{
     // choose random foil and random position in x, y, z (mm)
     int n = randFlat_.fireInt(1, nFoils);
     
-    stop.x = randFlat_.fire(foil.cx(n)-foil.radius(n), foil.cx(n)+foil.radius(n));
-    stop.y = randFlat_.fire(foil.cy(n)-foil.radius(n), foil.cy(n)+foil.radius(n));
+    double randrad = randFlat_.fire(foil.iradius(n), foil.oradius(n));
+    double randrho = randFlat_.fire(0, 2 * CLHEP::pi);
+
+    stop.x = randrad * cos(randrho);
+    stop.y = randrad * sin(randrho);
     stop.z = randFlat_.fire(foil.cz(n)-foil.halfThickness(n), foil.cz(n)+foil.halfThickness(n));
     
     // define pos vector using random positions
@@ -197,7 +201,7 @@ namespace mu2e{
     double kHi = 50.0;
     double kinen = _randFlat.fire(kLow, kHi); // choose kinetic energy; matches elow, ehi
     
-    double en = mpbar_*(299792458)*(299792458)*1000;  // rest energy (with conversion to MeV from GeV mass)
+    double en = mpbar_*(CLHEP::c_light)*(CLHEP::c_light)*1000;  // rest energy (with conversion to MeV from GeV mass)
     
     double energy = kinen + en;  // kinetic + rest energy
 
