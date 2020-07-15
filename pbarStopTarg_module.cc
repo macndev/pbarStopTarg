@@ -53,7 +53,7 @@ namespace mu2e{
   class pbarStopTarg : public art::EDProducer {
     fhicl::ParameterSet psphys_;
 
-    double rhoInternal_;
+    // double rhoInternal_;
     double elow_;
     double ehi_;
 
@@ -92,7 +92,7 @@ namespace mu2e{
     pbarStopTarg::pbarStopTarg(const fhicl::ParameterSet& pset)
       : EDProducer{pset}
       , psphys_             (pset.get<fhicl::ParameterSet>("physics"))
-      , rhoInternal_        (psphys_.get<double>("rhoInternal"))
+      // , rhoInternal_        (psphys_.get<double>("rhoInternal"))
       , spectrum_           (BinnedSpectrum(psphys_))
       , verbosityLevel_     (pset.get<int>("verbosityLevel", 0))
       , eng_                (createEngine(art::ServiceHandle<SeedService>()->getSeed()))
@@ -108,19 +108,19 @@ namespace mu2e{
       produces<mu2e::GenParticleCollection>();
       produces<mu2e::EventWeight>();
 
-      fractionSpectrum_ = 0.;
+      // fractionSpectrum_ = 0.;
 
       if(verbosityLevel_ > 0) {                              
-        std::cout<<"pbarStopTarg: using = "
-                 <<stops_.numRecords()
+        std::cout<<"pbarStopTarg: "
                  <<" stopped particles"
                  <<std::endl;
         std::cout<<"pbarStopTarg: producing pbar " << std::endl;
       }
 
-     me_  = GlobalConstantsHandle<ParticleDataTable>()->particle(PDGCode::e_minus ).ref().mass().value();
-     mmu_ = GlobalConstantsHandle<ParticleDataTable>()->particle(PDGCode::mu_minus).ref().mass().value();
-     mpbar_ = GlobalConstantsHandle<ParticleDataTable>()->particle(PDGCode::anti_proton).ref().mass().value();
+      // double me_  = GlobalConstantsHandle<ParticleDataTable>()->particle(PDGCode::e_minus ).ref().mass().value();
+      // double mmu_ = GlobalConstantsHandle<ParticleDataTable>()->particle(PDGCode::mu_minus).ref().mass().value();
+      
+      // double mpbar_ = GlobalConstantsHandle<ParticleDataTable>()->particle(PDGCode::anti_proton).ref().mass().value();
 
     randSpectrum_ = new CLHEP::RandGeneral(eng_, spectrum_.getPDF(), spectrum_.getNbins());
 
@@ -150,8 +150,7 @@ namespace mu2e{
     double t;
   };
 
-  // set time of ejection from stopping target, tZero; set x, y, z below
-  stop.t = 1000.; // constant for now
+  stop eventVec;
 
   void pbarStopTarg::produce(art::Event& event) {
 
@@ -160,46 +159,53 @@ namespace mu2e{
     // stopping target targ object, added stopping target include for this, get geom variables
     auto const& target = *GeomHandle<StoppingTarget>();
 
-    unsigned int nfoils = target->nFoils();
+    unsigned int nfoils = target.nFoils();
 
     for(unsigned int i=0; i<nfoils; ++i)
       {
-	const mu2e::TargetFoil &foil = target->foil(i);
-	int id = foil.id();
-	double cx = foil.centerInDetectorSystem().x();
-	double cy = foil.centerInDetectorSystem().y();
-	double cz = foil.centerInDetectorSystem().z();
-	double oradius = foil.rOut();
-	double halfThickness = foil.halfThickness();
-	double iradius = foil.rIn();
+	const mu2e::TargetFoil& foilTarg = target.foil(i);
+	int id = foilTarg.id();
+	double cx = foilTarg.centerInDetectorSystem().x();
+	double cy = foilTarg.centerInDetectorSystem().y();
+	double cz = foilTarg.centerInDetectorSystem().z();
+	double oradius = foilTarg.rOut();
+	double halfThickness = foilTarg.halfThickness();
+	double iradius = foilTarg.rIn();
 
-	std::cout<<"The coordinates for foil "<<i<<" are: x center - "<<cx<<" y center - "<<cy<<" z center - "<<cz<<" radius - "<<radius<<" and half thickness - "<<halfThickness<<". Onto the next foil... "<<std::endl;
+	std::cout<<"The coordinates for foil "<<i<<" are: x center - "<<cx<<" y center - "<<cy<<" z center - "<<cz<<" inner radius - "<<iradius<<" outer radius - "<<oradius<<" and half thickness - "<<halfThickness<<" id - "<<id<<". Onto the next foil... "<<std::endl;
 	  
       }
     
     // choose random foil and random position in x, y, z (mm)
-    int n = randFlat_.fireInt(1, nFoils);
+    int n = randFlat_.fireInt(1, nfoils);
     
-    double randrad = randFlat_.fire(foil.iradius(n), foil.oradius(n));
+    //  double randrad = randFlat_.fire(foilTarg.iradius(n), foilTarg.oradius(n));
+    double randrad = randFlat_.fire(target.foil(n).rIn(), target.foil(n).rOut());
     double randrho = randFlat_.fire(0, 2 * CLHEP::pi);
 
-    stop.x = randrad * cos(randrho);
-    stop.y = randrad * sin(randrho);
-    stop.z = randFlat_.fire(foil.cz(n)-foil.halfThickness(n), foil.cz(n)+foil.halfThickness(n));
+    eventVec.x = randrad * cos(randrho);
+    eventVec.y = randrad * sin(randrho);
+    eventVec.z = randFlat_.fire(target.foil(n).centerInDetectorSystem().z()-target.foil(n).halfThickness(), 
+				target.foil(n).centerInDetectorSystem().z()+target.foil(n).halfThickness());
+
+    // set time of ejection from stopping target, tZero; set x, y, z below
+    eventVec.t = 1000.; // constant for now
     
     // define pos vector using random positions
-    const CLHEP::Hep3Vector pos(stop.x, stop.y, stop.z);
+    const CLHEP::Hep3Vector pos(eventVec.x, eventVec.y, eventVec.z);
     
     if (doHistograms_){
-        _htZero->Fill(stop.t);
-	_hxPos->Fill(stop.x);
-	_hyPos->Fill(stop.y);
-        _hzPos->Fill(stop.z);
+        _htZero->Fill(eventVec.t);
+	_hxPos->Fill(eventVec.x);
+	_hyPos->Fill(eventVec.y);
+        _hzPos->Fill(eventVec.z);
     }
+
+    double mpbar_ = GlobalConstantsHandle<ParticleDataTable>()->particle(PDGCode::anti_proton).ref().mass().value();
 
     double kLow = 49.9;
     double kHi = 50.0;
-    double kinen = _randFlat.fire(kLow, kHi); // choose kinetic energy; matches elow, ehi
+    double kinen = randFlat_.fire(kLow, kHi); // choose kinetic energy; matches elow, ehi
     
     double en = mpbar_*(CLHEP::c_light)*(CLHEP::c_light)*1000;  // rest energy (with conversion to MeV from GeV mass)
     
@@ -214,11 +220,11 @@ namespace mu2e{
                           GenId::pbarStopTarg,
                           pos,
                           pbar,
-                          stop.t );
+                          eventVec.t );
 
     event.put(std::move(output));
 
-    event.put(std::move(pw));
+    //event.put(std::move(pw));
 
     if ( doHistograms_ ) {
       _hmomentum->Fill(mom);
@@ -227,15 +233,14 @@ namespace mu2e{
     }
    
     if (verbosityLevel_ > 0) {
-      std::cout << "original pbar energy = " << energy << " and electron mass = " << me_ <<  std::endl;
-      std::cout << "stop time = " << stop.t << std::endl;
-      std::cout << " event weight = " << fractionSpectrum_ << " " << rhoInternal_ << std::endl;
+      std::cout << "original pbar energy = " << energy << " and pbar mass = " << mpbar_ <<  std::endl;
+      std::cout << "stop time = " << eventVec.t << std::endl;
     }
   }
 }
 
 
 
-} // namespace mu2e
+ // namespace mu2e
 
 DEFINE_ART_MODULE(mu2e::pbarStopTarg);
