@@ -57,19 +57,19 @@ namespace mu2e{
     double elow_;
     double ehi_;
 
-    BinnedSpectrum spectrum_;
+    // BinnedSpectrum spectrum_;
 
     int verbosityLevel_;
 
     art::RandomNumberGenerator::base_engine_t& eng_;
     const double czmax_;
     const double czmin_;
-    CLHEP::RandGeneral* randSpectrum_;
+    // CLHEP::RandGeneral* randSpectrum_;
     RandomUnitSphere randUnitSphere_;
     RandomUnitSphere randUnitSphereExt_;
     CLHEP::RandFlat randFlat_;
 
-    MuonCaptureSpectrum muonCaptureSpectrum_;
+    // MuonCaptureSpectrum muonCaptureSpectrum_;
 
     bool doHistograms_;
 
@@ -93,7 +93,7 @@ namespace mu2e{
       : EDProducer{pset}
       , psphys_             (pset.get<fhicl::ParameterSet>("physics"))
       // , rhoInternal_        (psphys_.get<double>("rhoInternal"))
-      , spectrum_           (BinnedSpectrum(psphys_))
+      // , spectrum_           (BinnedSpectrum(psphys_))
       , verbosityLevel_     (pset.get<int>("verbosityLevel", 0))
       , eng_                (createEngine(art::ServiceHandle<SeedService>()->getSeed()))
       , czmax_              (pset.get<double>("czmax",  1.))
@@ -101,7 +101,7 @@ namespace mu2e{
       , randUnitSphere_     (eng_)
       , randUnitSphereExt_  (eng_, czmax_, czmin_)
       , randFlat_           (eng_)
-      , muonCaptureSpectrum_(&randFlat_,&randUnitSphere_)
+      // , muonCaptureSpectrum_(&randFlat_,&randUnitSphere_)
 	//   , stops_              (eng_, pset.get<fhicl::ParameterSet>("muonStops"))
       , doHistograms_       (pset.get<bool>("doHistograms",true ) )
     {
@@ -122,7 +122,7 @@ namespace mu2e{
       
       // double mpbar_ = GlobalConstantsHandle<ParticleDataTable>()->particle(PDGCode::anti_proton).ref().mass().value();
 
-    randSpectrum_ = new CLHEP::RandGeneral(eng_, spectrum_.getPDF(), spectrum_.getNbins());
+      //    randSpectrum_ = new CLHEP::RandGeneral(eng_, spectrum_.getPDF(), spectrum_.getNbins());
 
     if ( doHistograms_ ) {
       art::ServiceHandle<art::TFileService> tfs;
@@ -138,9 +138,9 @@ namespace mu2e{
     }
   }
 
-    pbarStopTarg::~pbarStopTarg() {
-      delete randSpectrum_;
-    }
+  //    pbarStopTarg::~pbarStopTarg() {
+  //      delete randSpectrum_;
+  //   }
 
   // make structure to hold random x, y, z position in stopping target and time t
   struct stop {
