@@ -122,7 +122,7 @@ namespace mu2e{
       
       // double mpbar_ = GlobalConstantsHandle<ParticleDataTable>()->particle(PDGCode::anti_proton).ref().mass().value();
 
-      //    randSpectrum_ = new CLHEP::RandGeneral(eng_, spectrum_.getPDF(), spectrum_.getNbins());
+      // randSpectrum_ = new CLHEP::RandGeneral(eng_, spectrum_.getPDF(), spectrum_.getNbins());
 
     if ( doHistograms_ ) {
       art::ServiceHandle<art::TFileService> tfs;
@@ -138,9 +138,9 @@ namespace mu2e{
     }
   }
 
-  //    pbarStopTarg::~pbarStopTarg() {
-  //      delete randSpectrum_;
-  //   }
+  // pbarStopTarg::~pbarStopTarg() {
+  //    delete randSpectrum_;
+  // }
 
   // make structure to hold random x, y, z position in stopping target and time t
   struct stop {
