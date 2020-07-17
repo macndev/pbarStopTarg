@@ -85,7 +85,7 @@ namespace mu2e{
 
     public:
       explicit pbarStopTarg(const fhicl::ParameterSet& pset);
-      ~pbarStopTarg();
+      virtual ~pbarStopTarg();
       virtual void produce(art::Event& event);
     };
 
@@ -122,7 +122,7 @@ namespace mu2e{
       
       // double mpbar_ = GlobalConstantsHandle<ParticleDataTable>()->particle(PDGCode::anti_proton).ref().mass().value();
 
-      // randSpectrum_ = new CLHEP::RandGeneral(eng_, spectrum_.getPDF(), spectrum_.getNbins());
+      //    randSpectrum_ = new CLHEP::RandGeneral(eng_, spectrum_.getPDF(), spectrum_.getNbins());
 
     if ( doHistograms_ ) {
       art::ServiceHandle<art::TFileService> tfs;
@@ -138,9 +138,9 @@ namespace mu2e{
     }
   }
 
-  // pbarStopTarg::~pbarStopTarg() {
-  //    delete randSpectrum_;
-  // }
+  pbarStopTarg::~pbarStopTarg() {
+  //      delete randSpectrum_;
+  }
 
   // make structure to hold random x, y, z position in stopping target and time t
   struct stop {
@@ -223,8 +223,8 @@ namespace mu2e{
                           eventVec.t );
 
     event.put(std::move(output));
-
-    //event.put(std::move(pw));
+    std::unique_ptr<EventWeight> pw(new EventWeight(weight));
+    event.put(std::move(pw));
 
     if ( doHistograms_ ) {
       _hmomentum->Fill(mom);
