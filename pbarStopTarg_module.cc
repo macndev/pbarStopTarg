@@ -207,11 +207,11 @@ namespace mu2e{
     double kHi = 50.0;
     double kinen = randFlat_.fire(kLow, kHi); // choose kinetic energy; matches elow, ehi
     
-    double en = mpbar_*(CLHEP::c_light)*(CLHEP::c_light)*1000;  // rest energy (with conversion to MeV from GeV mass)
+    // double en = mpbar_;  // rest energy (with conversion to MeV from GeV mass)
     
-    double energy = kinen + en;  // kinetic + rest energy
+    double energy = kinen + mpbar_;  // kinetic + rest energy
 
-    double mom = std::sqrt((energy * energy) - (en * en)); //momentum from energy
+    double mom = std::sqrt((energy * energy) - (mpbar_ * mpbar_)); //momentum from energy
 
     double weight = 1.;  // weight = 1
 
