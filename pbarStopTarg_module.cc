@@ -80,6 +80,8 @@ namespace mu2e{
     TH1F* _hxPos;
     TH1F* _hyPos;
     TH1F* _hzPos;
+    TH1F* _hrandrad;
+    TH1F* _hrandrho;
     
     // functions
 
@@ -128,13 +130,15 @@ namespace mu2e{
       art::ServiceHandle<art::TFileService> tfs;
       art::TFileDirectory tfdir = tfs->mkdir( "pbarStopTarg" );
 
-      _hmomentum       = tfdir.make<TH1F>("hmomentum", "Produced pbar momentum, RMC", 70,  0.,  140.  );
+      _hmomentum       = tfdir.make<TH1F>("hmomentum", "Produced pbar momentum, RMC", 500,  310.,  312.  );
       _hCosz           = tfdir.make<TH1F>("hCosz", "Produced pbar cosz, RMC", 200,  -1.,  1.  );
       _htZero          = tfdir.make<TH1F>("htZero"         , "Stopped pbar time", 100,0.,2000.);
-      _hWeight         = tfdir.make<TH1F>("hWeight"        , "Event Weight ", 100,0.,2.e-5);
+      _hWeight         = tfdir.make<TH1F>("hWeight"        , "Event Weight ", 5,0.,2.);
       _hxPos           = tfdir.make<TH1F>("hxPos", "Stopped pbar x position", 100, 50., -50.);
       _hyPos           = tfdir.make<TH1F>("hyPos", "Stopped pbar y position", 100, 50., -50.);
-      _hzPos           = tfdir.make<TH1F>("hzPos", "Stopper pbar z position",100, 0., 1000.);
+      _hzPos           = tfdir.make<TH1F>("hzPos", "Stopped pbar z position",500, -5000., -4000.);
+      _hrandrad        = tfdir.make<TH1F>("hrandrad", "Stopper pbar radial position",500, 0., 100.);
+      _hrandrho        = tfdir.make<TH1F>("hrandrho", "Stopper pbar rho angle",100, 0., 7.);
     }
   }
 
@@ -199,6 +203,8 @@ namespace mu2e{
 	_hxPos->Fill(eventVec.x);
 	_hyPos->Fill(eventVec.y);
         _hzPos->Fill(eventVec.z);
+	_hrandrad->Fill(randrad);
+	_hrandrho->Fill(randrho);
     }
 
     double mpbar_ = GlobalConstantsHandle<ParticleDataTable>()->particle(PDGCode::anti_proton).ref().mass().value();
@@ -232,6 +238,8 @@ namespace mu2e{
       _hWeight->Fill(weight);
     }
    
+    std::cout << "listing histogram variables: weight - " << weight << " momentum - " << mom << " and z position - " << eventVec.z << std::endl;
+
     if (verbosityLevel_ > 0) {
       std::cout << "original pbar energy = " << energy << " and pbar mass = " << mpbar_ <<  std::endl;
       std::cout << "stop time = " << eventVec.t << std::endl;
