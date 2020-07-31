@@ -15,8 +15,8 @@ physics : {
       physics : {
         genId : pbarStopTarg
 	pdgId : -2212
-	elow : 49.9 // MeV
-	ehi : 50.0  // MeV
+	elow : 332 // MeV
+	ehi : 333  // MeV
 	}
       }
     @table::Primary.producers
@@ -34,7 +34,8 @@ outputs : {
 #
 #include "JobConfig/primary/epilog.fcl"
 physics.filters.DigiFilter.particleTypes : [ -2212 ] # select antiprotons
+# physics.producers.g4run.debug.trackingVerbosityLevel : 1
 # customize the output
-services.TFileService.fileName: "nts.owner.pbarStopTarg.version.sequencer.root"
-outputs.Output.fileName: "dig.owner.pbarStopTarg.version.sequencer.art"
+services.TFileService.fileName: "/mu2e/data/users/macndev/nts.owner.pbarStopTarg.version.sequencer.root"
+outputs.Output.fileName: "/mu2e/data/users/macndev/dig.owner.pbarStopTarg.version.sequencer.art"
 physics.end_paths : [ EndPath ] # needed for generate_fcl

@@ -96,6 +96,8 @@ namespace mu2e{
       , psphys_             (pset.get<fhicl::ParameterSet>("physics"))
       // , rhoInternal_        (psphys_.get<double>("rhoInternal"))
       // , spectrum_           (BinnedSpectrum(psphys_))
+      , elow_               (pset.get<double>("elow"))
+      , ehi_                (pset.get<double>("ehi"))
       , verbosityLevel_     (pset.get<int>("verbosityLevel", 0))
       , eng_                (createEngine(art::ServiceHandle<SeedService>()->getSeed()))
       , czmax_              (pset.get<double>("czmax",  1.))
@@ -130,13 +132,13 @@ namespace mu2e{
       art::ServiceHandle<art::TFileService> tfs;
       art::TFileDirectory tfdir = tfs->mkdir( "pbarStopTarg" );
 
-      _hmomentum       = tfdir.make<TH1F>("hmomentum", "Produced pbar momentum, RMC", 500,  310.,  312.  );
+      _hmomentum       = tfdir.make<TH1F>("hmomentum", "Produced pbar momentum, RMC", 500,  850.,  870.  );
       _hCosz           = tfdir.make<TH1F>("hCosz", "Produced pbar cosz, RMC", 200,  -1.,  1.  );
       _htZero          = tfdir.make<TH1F>("htZero"         , "Stopped pbar time", 100,0.,2000.);
       _hWeight         = tfdir.make<TH1F>("hWeight"        , "Event Weight ", 5,0.,2.);
       _hxPos           = tfdir.make<TH1F>("hxPos", "Stopped pbar x position", 100, 50., -50.);
       _hyPos           = tfdir.make<TH1F>("hyPos", "Stopped pbar y position", 100, 50., -50.);
-      _hzPos           = tfdir.make<TH1F>("hzPos", "Stopped pbar z position",500, -5000., -4000.);
+      _hzPos           = tfdir.make<TH1F>("hzPos", "Stopped pbar z position",500, -4800., -3800.);
       _hrandrad        = tfdir.make<TH1F>("hrandrad", "Stopper pbar radial position",500, 0., 100.);
       _hrandrho        = tfdir.make<TH1F>("hrandrho", "Stopper pbar rho angle",100, 0., 7.);
     }
@@ -176,7 +178,9 @@ namespace mu2e{
 	double halfThickness = foilTarg.halfThickness();
 	double iradius = foilTarg.rIn();
 
-	std::cout<<"The coordinates for foil "<<i<<" are: x center - "<<cx<<" y center - "<<cy<<" z center - "<<cz<<" inner radius - "<<iradius<<" outer radius - "<<oradius<<" and half thickness - "<<halfThickness<<" id - "<<id<<". Onto the next foil... "<<std::endl;
+	if(verbosityLevel_ > 0) {
+	  std::cout<<"The coordinates for foil "<<i<<" are: x center - "<<cx<<" y center - "<<cy<<" z center - "<<cz<<" inner radius - "<<iradius<<" outer radius - "<<oradius<<" and half thickness - "<<halfThickness<<" id - "<<id<<". Onto the next foil... "<<std::endl;
+	}
 	  
       }
     
@@ -209,9 +213,9 @@ namespace mu2e{
 
     double mpbar_ = GlobalConstantsHandle<ParticleDataTable>()->particle(PDGCode::anti_proton).ref().mass().value();
 
-    double kLow = 49.9;
-    double kHi = 50.0;
-    double kinen = randFlat_.fire(kLow, kHi); // choose kinetic energy; matches elow, ehi
+    // double kLow = 0.1;
+    // double kHi = 333;
+    double kinen = randFlat_.fire(elow_, ehi_); // choose kinetic energy; matches elow, ehi
     
     // double en = mpbar_;  // rest energy (with conversion to MeV from GeV mass)
     
@@ -221,7 +225,34 @@ namespace mu2e{
 
     double weight = 1.;  // weight = 1
 
-    CLHEP::HepLorentzVector pbar(randUnitSphereExt_.fire(mom),energy);
+    double choosesignx = randFlat_.fire(0,1.);
+    double choosesigny = randFlat_.fire(0,1.);
+    double pzweight = 0.01;
+    double notpzweight = 1 - (pzweight * pzweight);
+    double choosevec = randFlat_.fire(0,notpzweight);
+    
+    // randomly put x and y in + or - directions
+    if(choosesignx > 0.5) {
+      choosesignx = 1.;
+    }
+    else {
+      choosesignx = -1.;
+	}
+    if(choosesigny > 0.5) {
+      choosesigny = 1.;
+    }
+    else {
+      choosesigny = -1.;
+	}
+      
+
+    double px = choosesignx * std::sqrt(choosevec * (mom * mom));
+    double py = choosesigny * std::sqrt(notpzweight * (mom * mom) - (px * px));
+    double pz = pzweight * mom;
+
+    CLHEP::Hep3Vector momvec(px,py,pz);
+
+    CLHEP::HepLorentzVector pbar(momvec,energy);
     output->emplace_back( PDGCode::anti_proton,
                           GenId::pbarStopTarg,
                           pos,
@@ -239,6 +270,7 @@ namespace mu2e{
     }
    
     std::cout << "listing histogram variables: weight - " << weight << " momentum - " << mom << " and z position - " << eventVec.z << std::endl;
+    std::cout << "listing momentum vector: " << pbar << std::endl;
 
     if (verbosityLevel_ > 0) {
       std::cout << "original pbar energy = " << energy << " and pbar mass = " << mpbar_ <<  std::endl;
