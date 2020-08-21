@@ -138,7 +138,7 @@ namespace mu2e{
       _hWeight         = tfdir.make<TH1F>("hWeight"        , "Event Weight ", 5,0.,2.);
       _hxPos           = tfdir.make<TH1F>("hxPos", "Stopped pbar x position", 100, 50., -50.);
       _hyPos           = tfdir.make<TH1F>("hyPos", "Stopped pbar y position", 100, 50., -50.);
-      _hzPos           = tfdir.make<TH1F>("hzPos", "Stopped pbar z position",500, -4800., -3800.);
+      _hzPos           = tfdir.make<TH1F>("hzPos", "Stopped pbar z position",1000, 5400., 6300.);
       _hrandrad        = tfdir.make<TH1F>("hrandrad", "Stopper pbar radial position",500, 0., 100.);
       _hrandrho        = tfdir.make<TH1F>("hrandrho", "Stopper pbar rho angle",100, 0., 7.);
     }
@@ -161,6 +161,8 @@ namespace mu2e{
   void pbarStopTarg::produce(art::Event& event) {
 
     std::unique_ptr<GenParticleCollection> output(new GenParticleCollection);
+
+    static GeomHandle<DetectorSystem> det;
 
     // stopping target targ object, added stopping target include for this, get geom variables
     auto const& target = *GeomHandle<StoppingTarget>();
@@ -200,13 +202,14 @@ namespace mu2e{
     eventVec.t = 1000.; // constant for now
     
     // define pos vector using random positions
-    const CLHEP::Hep3Vector pos(eventVec.x, eventVec.y, eventVec.z);
+    CLHEP::Hep3Vector pos(eventVec.x, eventVec.y, eventVec.z);
+    CLHEP::Hep3Vector pos_mu2e = det->toMu2e(pos);
     
     if (doHistograms_){
         _htZero->Fill(eventVec.t);
-	_hxPos->Fill(eventVec.x);
-	_hyPos->Fill(eventVec.y);
-        _hzPos->Fill(eventVec.z);
+	_hxPos->Fill(pos_mu2e.x());
+	_hyPos->Fill(pos_mu2e.y());
+        _hzPos->Fill(pos_mu2e.z());
 	_hrandrad->Fill(randrad);
 	_hrandrho->Fill(randrho);
     }
@@ -255,7 +258,7 @@ namespace mu2e{
     CLHEP::HepLorentzVector pbar(momvec,energy);
     output->emplace_back( PDGCode::anti_proton,
                           GenId::pbarStopTarg,
-                          pos,
+                          pos_mu2e,
                           pbar,
                           eventVec.t );
 
@@ -269,7 +272,7 @@ namespace mu2e{
       _hWeight->Fill(weight);
     }
    
-    std::cout << "listing histogram variables: weight - " << weight << " momentum - " << mom << " and z position - " << eventVec.z << std::endl;
+    std::cout << "listing histogram variables: weight - " << weight << " momentum - " << mom << " and z position - " << pos_mu2e.z() << std::endl;
     std::cout << "listing momentum vector: " << pbar << std::endl;
 
     if (verbosityLevel_ > 0) {
